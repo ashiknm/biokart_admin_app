@@ -27,7 +27,7 @@ const Userdetailsapproval = () => {
 
   const getUsersList = async () => {
     try {
-        const response = await axiosPrivate.get('/showunaprrovedusers', {
+        const response = await axiosPrivate.get('/showupdaterequestedusers', {
             // signal: controller.signal
         });
         setUserlist(response.data);
@@ -141,7 +141,7 @@ const handleApproveClick = async (user_id) =>{
         p="5px"
         display="flex"
         justifyContent="center"
-        onClick={()=>handleApproveClick(params.row.user_id)}
+        onClick={()=>navigate(`/userprofile/${params.row.user_id}`, {state:{updates: true}})}
         backgroundColor={
           colors.greenAccent[600]
         }

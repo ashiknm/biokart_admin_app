@@ -36,13 +36,13 @@ font-weight: bold;
 box-sizing: border-box; 
 } 
 .inner:before { 
-content: "YES"; 
+content: "NEW"; 
 padding-left: 10px; 
-background-color: #060; 
+background-color: #70d8bd; 
 color: #fff; 
 } 
 .inner:after { 
-content: "NO"; 
+content: "OLD"; 
 padding-right: 10px; 
 background-color: #bbb; 
 color: #fff; 

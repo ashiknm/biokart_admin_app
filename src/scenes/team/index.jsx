@@ -146,7 +146,7 @@ const Team = () => {
     left: "50%",
     transform: "translate(-50%, -50%)",
     width: 600,
-    bgcolor: "background.paper",
+    bgcolor: colors.primary[400],
     // border: "2px solid #000",
     boxShadow: 24,
     p: 4,
@@ -279,7 +279,7 @@ const Team = () => {
           aria-describedby="modal-modal-description"
           
         >
-          <Box sx={style} className="border">
+          <Box sx={style}>
             <Typography id="modal-modal-title" variant="h4" component="h2">
               Add New Admin
             </Typography>

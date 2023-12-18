@@ -2,8 +2,12 @@ import * as React from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-// import { mockDataContacts } from "../../data/mockData";
-import { mockUsers } from "../../data/mockData";
+import ToggleSwitch from "../../components/ToggleSwitch";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
+import useAuth from "../../hooks/useAuth";
+
 import Header from "../../components/Header";
 import { useTheme } from "@mui/material";
 
@@ -53,18 +57,16 @@ import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Avatar from "@mui/material/Avatar";
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import Grid from "@mui/material/Grid";
 import FolderIcon from "@mui/icons-material/Folder";
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import ClassIcon from '@mui/icons-material/Class';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import AccountBoxIcon from "@mui/icons-material/AccountBox";
+import ClassIcon from "@mui/icons-material/Class";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
@@ -72,10 +74,16 @@ import Stack from "@mui/material/Stack";
 import LockIcon from "@mui/icons-material/Lock";
 import { registerables } from "chart.js";
 
+const USER_REGEX = /^[a-zA-Z][a-zA-Z0-9_ -]{3,23}$/;
+const Email_regex = /^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$/;
+const approved_mail = /^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+@(edu\.in)$/; 
+const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
+
 const Userprofile = () => {
   const { userId } = useParams();
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const { auth } = useAuth();
 
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
@@ -85,7 +93,35 @@ const Userprofile = () => {
   const [projectdata, setProjectdata] = useState([]);
   const [sampledata, setSampledata] = useState([]);
 
+  const [fullName, setFullName] = useState("");
+  const [validName, setValidName] = useState(false);
+
+
+  const [piName, setPiName] = useState("");
+  const [validPiName, setValidPiName] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [validEmail, setValidEmail] = useState(false);
+
+  const [department, setDepartment] = useState("");
+  const [validDepartment, setValidDepartment] = useState(false);
+
+  const [phonenumber, setPhonenumber] = useState("");
+
+  const [institute_organization, setInstitute_organization] = useState("");
+  const [address, setAddress] = useState("");
+  const [country, setCountry] = useState("");
+
+  const [password, setPassword] = useState("");
+  const [validPassword, setValidPassword] = useState(false);
+
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [validConfirmpassword, setValidConfirmpassword] = useState(false);
+
   const [passwordSet, setPasswordSet] = useState(false);
+  const [checked, setChecked] = useState(false);
+
+  const showupdates = location.state.updates;
 
   const [projectSelected, setProjectSelected] = useState(false);
   const [projectId, setProjectId] = useState();
@@ -97,36 +133,87 @@ const Userprofile = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showPassword2, setShowPassword2] = React.useState(false);
 
-  const [password, setPassword] = React.useState("");
-  const [validPassword, setValidPassword] = useState(false);
-
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [validConfirmpassword, setValidConfirmpassword] = useState(false);
-
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleClickShowPassword2 = () => setShowPassword2((show) => !show);
 
-  const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
+
+
+  useEffect(() => {
+    const result = USER_REGEX.test(fullName);
+    setValidName(result);
+  }, [fullName]);
+
+  useEffect(() => {
+    const result = USER_REGEX.test(piName);
+    setValidPiName(result);
+  }, [piName]);
+
+  useEffect(() => {
+    const result = Email_regex.test(email);
+    setValidEmail(result);
+  }, [email]);
+
+  useEffect(() => {
+    const result = USER_REGEX.test(department);
+    setValidDepartment(result);
+  }, [department]);
+
+  useEffect(() => {
+    const result = PWD_REGEX.test(password);
+    setValidPassword(result);
+    const match = password === confirmPassword;
+    setValidConfirmpassword(match);
+  }, [password, confirmPassword]);
+
 
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
 
+  const getUserUpdatesdata = async () =>{
+    try {
+      const response = await axiosPrivate.get(`/showupdaterequestedusersbyid/${userId}`, {
+        // signal: controller.signal
+      });
+      const user = response.data;
+      setFullName(user.full_name);
+      setEmail(user.email);
+      setPiName(user.project_incharge_name);
+      setDepartment(user.research_department);
+      setPhonenumber(user.phone);
+      setInstitute_organization(user.institution_organization);
+      setAddress(user.address);
+      setCountry(user.country);
+      setPassword(user.password);
+
+
+    } catch (err) {
+      console.error(err);
+      navigate("/login", { state: { from: location }, replace: true });
+    }
+  }
+
+  const getUserData = async () => {
+    try {
+      console.log("userid :", userId);
+      const response = await axiosPrivate.get(`/oneuser/${userId}`, {
+        // signal: controller.signal
+      });
+      setUserdata(response.data);
+      if ( showupdates && response.data.update_status === "pending") {
+        setChecked(true);
+        getUserUpdatesdata();
+      }
+    } catch (err) {
+      console.error(err);
+      navigate("/login", { state: { from: location }, replace: true });
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
-    const getUserData = async () => {
-      try {
-        console.log("userid :", userId);
-        const response = await axiosPrivate.get(`/oneuser/${userId}`, {
-          // signal: controller.signal
-        });
-        isMounted && setUserdata(response.data);
-      } catch (err) {
-        console.error(err);
-        navigate("/login", { state: { from: location }, replace: true });
-      }
-    };
+    
 
     const getProjectData = async () => {
       try {
@@ -140,7 +227,7 @@ const Userprofile = () => {
       }
     };
 
-    getUserData();
+    isMounted && getUserData();
     getProjectData();
 
     return () => {
@@ -178,6 +265,31 @@ const Userprofile = () => {
     const match = password === confirmPassword;
     setValidConfirmpassword(match);
   }, [password, confirmPassword]);
+
+  const updateprofile = async () =>{
+    const response = await axiosPrivate
+    .put(
+      `/updaterequesteduser/${userId}`,
+      JSON.stringify({
+        "full_name"               : fullName,
+        "email"                   : email,
+        "phone"                   : phonenumber,
+        "institution_organization": institute_organization,
+        "research_department"     : department,
+        "project_incharge_name"   : piName,
+        "address"                 : address,
+        "country"                 : country,
+      }),
+      {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      }
+    )
+    .then(() => {
+      toast.success("Details Approved Successfully ");
+      getUserData();
+    });
+  }
 
   const handlePasswordchange = async () => {
     const response = await axiosPrivate
@@ -397,713 +509,314 @@ const Userprofile = () => {
   return (
     <Box
       className="flex justify-around px-2"
-      style={{ height: "90vh", overflowY: "scroll"}}
+      style={{ height: "90vh", overflowY: "scroll" }}
     >
-      {/* <Header
-        title="User Approvals"
-        // subtitle="List of Users for Future Reference"
-      /> */}
-
-      {/* <Box
-        m="20px 0 0 0"
-        height="78vh"
-        sx={{
-          "& .MuiDataGrid-root": {
-            border: "none",
-          },
-          "& .MuiDataGrid-cell": {
-            borderBottom: "none",
-          },
-          "& .name-column--cell": {
-            color: colors.greenAccent[300],
-          },
-          "& .MuiDataGrid-columnHeaders": {
-            backgroundColor: colors.blueAccent[700],
-            borderBottom: "none",
-          },
-          "& .MuiDataGrid-virtualScroller": {
-            backgroundColor: colors.primary[400],
-          },
-          "& .MuiDataGrid-footerContainer": {
-            borderTop: "none",
-            backgroundColor: colors.blueAccent[700],
-          },
-          "& .MuiCheckbox-root": {
-            color: `${colors.greenAccent[200]} !important`,
-          },
-          "& .MuiDataGrid-toolbarContainer .MuiButton-text": {
-            color: `${colors.grey[100]} !important`,
-          },
-        }}
-      >
-        <DataGrid
-          rows={userlist}
-          columns={columns}
-          components={{ Toolbar: GridToolbar }}
-          getRowId={getRowId}
-        />
-      </Box> */}
-
-      {/* <div
-        className="border m-auto "
-        style={{ height: "35%", width: "95%", borderRadius: "15px" }}
-      >
-        <div
-          className="border bg-slate-400 flex align-items-center p-3"
-          style={{
-            height: "20%",
-            borderTopLeftRadius: "15px",
-            borderTopRightRadius: "15px",
-          }}
-        >
-          <h1 className="text-white font-semibold">UID: {userdata.user_id}</h1>
-        </div>
-        <div className=" flex" style={{ height: "80%" }}>
-          <div className="border-r" style={{ width: "70%", height: "100%" }}>
-            <div
-              className="  flex align-items-start pt-4"
-              style={{ height: "60%" }}
-            >
-              <Box className=" flex flex-wrap " style={{ width: "100%" }}>
-
-                <Box
-                  style={{ width: "25%" }}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Statbox2
-                    title={userdata.credits_remaining}
-                    subtitle="credits"
-                    progress={1 - userdata.credits_remaining / 100}
-                    increase="+14%"
-                    icon={
-                      <PeopleIcon sx={{ color: "green", fontSize: "26px" }} />
-                    }
-                  />
-                </Box>
-                <Box
-                  style={{ width: "25%" }}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Statbox2
-                    title={userdata.project_count}
-                    subtitle="Projects"
-                    progress={1 - userdata.project_count / 200}
-                    increase="+21%"
-                    icon={
-                      <PeopleIcon sx={{ color: "green", fontSize: "26px" }} />
-                    }
-                  />
-                </Box>
-                <Box
-                  style={{ width: "25%" }}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Statbox2
-                    title={userdata.samples_count}
-                    subtitle="Samples"
-                    progress={1 - userdata.project_count / 500}
-                    increase="+5%"
-                    icon={
-                      <PeopleIcon sx={{ color: "green", fontSize: "26px" }} />
-                    }
-                  />
-                </Box>
-                <Box
-                  style={{ width: "25%" }}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Statbox2
-                    title={userdata.storage_used}
-                    subtitle="Storage"
-                    progress={1 - userdata.storage_used / 100}
-                    increase="+43%"
-                    icon={
-                      <PeopleIcon sx={{ color: "green", fontSize: "26px" }} />
-                    }
-                  />
-                </Box>
-              </Box>
-            </div>
-            <div
-              style={{ height: "40%" }}
-              className="flex justify-center align-items-end pb-1"
-            >
-              <div className="flex justify-evenly" style={{ width: "70%" }}>
-                <div>
-                  <label className="me-2" for="confidence">
-                    Confidence :
-                  </label>
-                  <input
-                    className="rounded"
-                    style={{ height: "40px" }}
-                    id="confidence"
-                    type="text"
-                  />
-                </div>
-                <div>
-                  <label className="me-2" for="core">
-                    Core :
-                  </label>
-                  <input
-                    className="rounded"
-                    style={{ height: "40px" }}
-                    id="core"
-                    type="text"
-                  />
-                </div>
-                <button
-                  className="rounded"
-                  style={{
-                    height: "40px",
-                    width: "60px",
-                    backgroundColor: colors.blueAccent[700],
-                    color: colors.grey[100],
-                    fontSize: "14px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="border-l-2"
-            style={{ width: "30%", position: "relative", height: "100%" }}
-          >
-            <div className="flex justify-between p-2" style={{ height: "20%" }}>
-              <h1 style={{ fontSize: "20px" }}>UID: {userdata.user_id}</h1>
-              <h1 style={{ fontSize: "20px" }}>
-                {userdata.institution_organization}
-              </h1>
-            </div>
-            <h1
-              className="flex align-items-center justify-center"
-              style={{ fontSize: "35px", height: "50%" }}
-            >
-              {userdata.full_name}
-            </h1>
-            <div className="flex flex-col p-2 " style={{ height: "30%" }}>
-              <h1 style={{ fontSize: "20px" }}>Ph: {userdata.phone}</h1>
-              <h1 style={{ fontSize: "20px" }}>
-                {userdata.institution_organization}
-              </h1>
-            </div>
-            <Link to="/settings/profilesettings">
-              <AccountBalanceWalletIcon
-                style={{
-                  position: "absolute",
-                  bottom: 10,
-                  right: 50,
-                  color: "#506589",
-                  cursor: "pointer",
-                }}
-              />
-            </Link>
-
-            <DeleteIcon
-              style={{
-                position: "absolute",
-                bottom: 10,
-                right: 20,
-                color: "red",
-              }}
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        className="m-auto flex"
-        style={{ height: "65%", width: "95%", borderRadius: "15px" }}
-      >
-        <div className=" m-auto " style={{ width: "65%", height: "95%" }}>
-          {!projectSelected ? (
-            <DataGrid
-          
-              rows={projectdata}
-              columns={columns}
-              slots={{
-                toolbar: GridToolbar,
-              }}
-              getRowId={getRowId}
-            />
-          ) : (
-            <div style={{ height: "100%" }}>
-              <div
-                className="flex align-items-center justify-between p-2"
-                style={{ height: "10%", width: "100%" }}
-              >
-                <div
-                  className="flex align-items-center p-2"
-                  style={{ width: "85%" }}
-                >
-                  <KeyboardBackspaceIcon
-                    onClick={() => setProjectSelected(false)}
-                    className="me-2"
-                    style={{ fontSize: 40, cursor: "pointer" }}
-                  />
-                  <h1 style={{ fontSize: 30 }}>{projectName}</h1>
-                </div>
-                <Button
-                  onClick = {handlesampleDownload}
-                  style={{
-                    width: "15%",
-                    backgroundColor: colors.primary[400],
-                    color: colors.grey[100],
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    padding: "5px 5px",
-                  }}
-                >
-                  Download Samples
-                </Button>
-              </div>
-              <div className="flex" style={{ height: "90%", width: "100%" }}>
-                <DataGrid
-                  style={{ width: "60%" }}
-                
-                  rows={sampledata}
-                  columns={columns2}
-                  slots={{
-                    toolbar: GridToolbar,
-                  }}
-                  getRowId={getRowId2}
-                />
-                <div
-                  className="flex flex-col justify-center"
-                  style={{ width: "40%" }}
-                >
-                  <div
-                    className="border rounded m-auto"
-                    style={{ height: "47.5%", width: "97.5%" }}
-                  >
-                    <h1
-                      style={{ height: "20%" }}
-                      className="font-bold p-2 text-xl"
-                    >
-                      Logs
-                    </h1>
-                    <Stack
-                      sx={{
-                        height: "80%",
-                        width: "100%",
-                        overflow: "hidden",
-                        overflowY: "scroll",
-                      }}
-                      spacing={2}
-                    >
-                      <Alert severity="error">
-                        This is an error alert — check it out!
-                      </Alert>
-                      <Alert severity="warning">
-                        This is a warning alert — check it out!
-                      </Alert>
-                      <Alert severity="info">
-                        This is an info alert — check it out!
-                      </Alert>
-                      <Alert severity="success">
-                        This is a success alert — check it out!
-                      </Alert>
-                    </Stack>
-                  </div>
-                  <div
-                    className="border rounded m-auto"
-                    style={{ height: "47.5%", width: "97.5%" }}
-                  >
-                    <h1
-                      style={{ height: "20%" }}
-                      className="font-bold p-2 text-xl"
-                    >
-                      Reports
-                    </h1>
-                    <Grid item xs={12} md={6}  sx={{
-                        height: "80%",
-                        width: "100%",
-                        overflow: "hidden",
-                        overflowY: "scroll",
-                      }}>
-                        <List dense={false}>
-                          {generate(
-                            <ListItem>
-                              <ListItemAvatar>
-                                <Avatar>
-                                  <FolderIcon />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary="Single-line item"
-                                secondary={"Secondary text"}
-                              />
-                            </ListItem>
-                          )}
-                        </List>
-                    </Grid>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        <div
-          className=" m-auto "
-          style={{ width: "35%", height: "95%", position: "relative" }}
-        >
-          <div
-            className=" m-auto flex justify-evenly p-2"
-            style={{ width: "100%", height: "15%" }}
-          >
-            <Button
-              style={{
-                width: "45%",
-                backgroundColor: colors.blueAccent[700],
-                color: colors.grey[100],
-                fontSize: "14px",
-                fontWeight: "bold",
-                padding: "10px 20px",
-              }}
-            >
-              Export Projects
-            </Button>
-            <Button
-              style={{
-                width: "45%",
-                backgroundColor: colors.blueAccent[700],
-                color: colors.grey[100],
-                fontSize: "14px",
-                fontWeight: "bold",
-                padding: "10px 20px",
-              }}
-            >
-              Export Samples
-            </Button>
-          </div>
-
-          {passwordSet && (
-            <div
-              className="flex flex-col justify-center align-items-center"
-              style={{ width: "100%", height: "75%" }}
-              
-            >
-              <FormControl
-                className=""
-                sx={{ width: "80%" }}
-                variant="standard"
-              >
-                <div
-                  className="flex align-items-center border rounded"
-                  style={{ width: "100%" }}
-                >
-                  <LockIcon style={{ width: "10%" }} sx={{ mr: 1, my: 0.5 }} />
-                  <InputLabel
-                    style={{ marginLeft: "15%" }}
-                    htmlFor="outlined-adornment-password"
-                  >
-                    Password
-                  </InputLabel>
-                  <OutlinedInput
-                    style={{ width: "90%" }}
-                    id="outlined-adornment-password"
-                    type={showPassword ? "text" : "password"}
-                    value = {password}
-                    onChange={(e)=>setPassword(e.target.value)}
-                    required
-                    aria-invalid={validPassword ? "false" : "true"}
-                    aria-describedby="uidnote5"
-                    endAdornment={
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label="toggle password visibility"
-                          onClick={handleClickShowPassword}
-                          onMouseDown={handleMouseDownPassword}
-                          edge="end"
-                        >
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    }
-                    label="Password"
-                  />
-                </div>
-                <p
-                id="uidnote5"
-                className={
-                  password && !validPassword
-                    ? "bg-dark text-light rounded text-sm p-2 mt-1"
-                    : "hidden"
-                }
-              >
-                <InfoIcon fontSize="25" className="me-2" />
-                8 to 24 characters. <br />
-                Must include uppercase and lowercase letters, a number and a
-                special character. <br />
-                Allowed Special characters:{" "}
-                <span aria-label="explanation mark">!</span>
-                <span aria-label="at symbol">@</span>
-                <span aria-label="hashtag">#</span>
-                <span aria-label="dollar sign">$</span>
-                <span aria-label="percent">%</span>
-                <br />
-              </p>
-              </FormControl>
-
-              <FormControl
-                className=" mt-4"
-                sx={{ width: "80%" }}
-                variant="standard"
-              >
-                <div
-                  className="flex align-items-center border rounded"
-                  style={{ width: "100%" }}
-                >
-                  <LockIcon style={{ width: "10%" }} sx={{ mr: 1, my: 0.5 }} />
-                  <InputLabel
-                    style={{ marginLeft: "15%" }}
-                    htmlFor="outlined-adornment-password"
-                  >
-                    Confirm Password
-                  </InputLabel>
-                  <OutlinedInput
-                    style={{ width: "90%" }}
-                    id="outlined-adornment-password"
-                    type={showPassword2 ? "text" : "password"}
-                    value = {confirmPassword}
-                    onChange={(e)=>setConfirmPassword(e.target.value)}
-                    required
-                    aria-invalid={validConfirmpassword ? "false" : "true"}
-                    aria-describedby="uidnote6"
-                    endAdornment={
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label="toggle password visibility"
-                          onClick={handleClickShowPassword2}
-                          onMouseDown={handleMouseDownPassword}
-                          edge="end"
-                        >
-                          {showPassword2 ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    }
-                    label="ConfirmPassword"
-                  />
-                </div>
-                <p
-                id="uidnote6"
-                className={
-                  confirmPassword && !validConfirmpassword
-                    ? "bg-dark text-light rounded text-sm p-2 mt-1"
-                    : "hidden"
-                }
-              >
-                <InfoIcon fontSize="25" className="me-2" />
-                Password does not match
-              </p>
-              </FormControl>
-
-              <Button
-              onClick={handlePasswordchange}
-                className="mt-4 "
-                style={{
-                  width: "80%",
-                  backgroundColor: "rgba(0, 172, 232, 0.5)",
-                  color: colors.grey[100],
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  padding: "10px 20px",
-                }}
-              >
-                Update
-              </Button>
-            </div>
-          )}
-
-          <div
-            onClick={() => setPasswordSet(!passwordSet)}
-            className="text-center border-bottom"
-            style={{
-              position: "absolute",
-              bottom: "0",
-              left: "50%",
-              transform: "translate(-50%, 0)",
-              fontSize: "20px",
-              cursor: "pointer",
-            }}
-          >
-            Reset User Password{" "}
-            {passwordSet ? <KeyboardArrowDownIcon /> : <KeyboardArrowUpIcon />}
-          </div>
-        </div>
-      </div> */}
       <div
         className="m-auto p-2"
         style={{
           width: "27.5%",
           height: "95%",
-          backgroundColor: colors.primary[400]
+          backgroundColor: colors.primary[400],
         }}
       >
-        
-        <div className="flex justify-between" style = {{height: "5%"}}>
-          <h2 className="m-2" style = {{fontSize : "18px"}}>Profile <ChevronRightIcon className="ms-1" /></h2>
-          <EditIcon className="cursor-pointer" />
+        <div className="flex justify-between" style={{ height: "5%" }}>
+          <h2 className="m-2" style={{ fontSize: "18px" }}>
+            Profile <ChevronRightIcon className="ms-1" />
+            <EditIcon className="cursor-pointer" />
+          </h2>
+          {showupdates &&
+            (auth.role === '["admin"]' || auth.role === '["superadmin"]') && (
+              <FormGroup>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={checked}
+                      onChange={()=>setChecked(!checked)}
+                      color="secondary"
+                    />
+                  }
+                  label="updates"
+                />
+              </FormGroup>
+            )}
         </div>
-        
-        <div className="flex flex-col align-items-stretch" style = {{height: "80%"}}>
+
+
+        {!checked?
+        <div style={{ height: "90%" }}>
         <div
-                  className="flex m-1"
-                  style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
-                >
-                  <div className=" w-20 flex justify-center align-items-center">
-                    <AccountCircleIcon style = {{fontSize : 22}} />
-                  </div>
-                  <div className=" w-80 ">
-                    <small>
-                      <p style={{ lineHeight: "20px", fontSize : "15px" }}>UserId :</p>
-                    </small>
-                    <p>{userdata.user_id}</p>
-                  </div>
-                </div>
-                <div
-                  className="flex m-1"
-                  style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
-                >
-                  <div className=" w-20 flex justify-center align-items-center">
-                    <AccountBoxIcon style = {{fontSize : 22}} />
-                  </div>
-                  <div className=" w-80 ">
-                    <small>
-                      <p style={{ lineHeight: "20px", fontSize : "15px" }}>Name</p>
-                    </small>
-                    <p>{userdata.full_name}</p>
-                  </div>
-                </div>
-                <div
-                  className=" flex m-1"
-                  style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
-                >
-                  <div className=" w-20 flex justify-center align-items-center">
-                    <EmailIcon style = {{fontSize : 22}} />
-                  </div>
-                  <div className=" w-80 ">
-                    <small>
-                      <p style={{ lineHeight: "20px", fontSize : "15px" }}>Email address</p>
-                    </small>
-                    <p style = {{fontSize : "18px"}}>{userdata.email}</p>
-                  </div>
-                </div>
-                <div
-                  className=" flex m-1"
-                  style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
-                >
-                  <div className=" w-20 flex justify-center align-items-center">
-                    <LocalPhoneIcon style = {{fontSize : 22}} />
-                  </div>
-                  <div className=" w-80 ">
-                    <small>
-                      <p style={{ lineHeight: "20px", fontSize : "15px" }}>Phone Number</p>
-                    </small>
-                    <p style = {{fontSize : "18px"}}>{userdata.phone}</p>
-                  </div>
-                </div>
-                <div
-                  className=" flex m-1"
-                  style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
-                >
-                  <div className=" w-20 flex justify-center align-items-center">
-                    <CorporateFareIcon style = {{fontSize : 22}} />
-                  </div>
-                  <div className=" w-80 ">
-                    <small>
-                      <p style={{ lineHeight: "20px", fontSize : "15px" }}>
-                        Institute/Organization
-                      </p>
-                    </small>
-                    <p style = {{fontSize : "18px"}}>{userdata.institution_organization}</p>
-                  </div>
-                </div>
-                <div
-                  className=" flex m-1"
-                  style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
-                >
-                  <div className=" w-20 flex justify-center align-items-center">
-                    <ClassIcon style = {{fontSize : 22}} />
-                  </div>
-                  <div className=" w-80 ">
-                    <small>
-                      <p style={{ lineHeight: "20px", fontSize : "15px" }}>Research Department</p>
-                    </small>
-                    <p style = {{fontSize : "18px"}}>{userdata.research_department}</p>
-                  </div>
-                </div>
-                <div
-                  className=" flex m-1"
-                  style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
-                >
-                  <div className=" w-20 flex justify-center align-items-center">
-                    <AccountTreeIcon style = {{fontSize : 22}} />
-                  </div>
-                  <div className=" w-80 ">
-                    <small>
-                      <p style={{ lineHeight: "20px", fontSize : "15px" }}>Project Incharge</p>
-                    </small>
-                    <p style = {{fontSize : "18px"}}>{userdata.project_incharge_name}</p>
-                  </div>
-                </div>
-                <div
-                  className=" flex m-1"
-                  style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
-                >
-                  <div className=" w-20 flex justify-center align-items-center">
-                    <LocationOnIcon style = {{fontSize : 22}} />
-                  </div>
-                  <div className=" w-80 ">
-                    <small>
-                      <p style={{ lineHeight: "20px", fontSize : "15px" }}>Address</p>
-                    </small>
-                    <p style = {{fontSize : "18px"}}>{userdata.address}, {userdata.country}</p>
-                  </div>
-                </div>
-              </div>
-              <div
-            className=" mt-3 flex justify-evenly p-2"
+          className="flex flex-col align-items-stretch"
+          style={{ height: "90%" }}
+        >
+          <div
+            className="flex m-1"
+            style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
+          >
+            <div className=" w-20 flex justify-center align-items-center">
+              <AccountCircleIcon style={{ fontSize: 22 }} />
+            </div>
+            <div className=" w-80 ">
+              <small>
+                <p style={{ lineHeight: "20px", fontSize: "15px" }}>
+                  UserId :
+                </p>
+              </small>
+              <p>{userdata.user_id}</p>
+            </div>
+          </div>
+          <div
+            className="flex m-1"
+            style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
+          >
+            <div className=" w-20 flex justify-center align-items-center">
+              <AccountBoxIcon style={{ fontSize: 22 }} />
+            </div>
+            <div className=" w-80 ">
+              <small>
+                <p style={{ lineHeight: "20px", fontSize: "15px" }}>Name</p>
+              </small>
+              <p>{userdata.full_name}</p>
+            </div>
+          </div>
+          <div
+            className=" flex m-1"
+            style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
+          >
+            <div className=" w-20 flex justify-center align-items-center">
+              <EmailIcon style={{ fontSize: 22 }} />
+            </div>
+            <div className=" w-80 ">
+              <small>
+                <p style={{ lineHeight: "20px", fontSize: "15px" }}>
+                  Email address
+                </p>
+              </small>
+              <p style={{ fontSize: "18px" }}>{userdata.email}</p>
+            </div>
+          </div>
+          <div
+            className=" flex m-1"
+            style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
+          >
+            <div className=" w-20 flex justify-center align-items-center">
+              <LocalPhoneIcon style={{ fontSize: 22 }} />
+            </div>
+            <div className=" w-80 ">
+              <small>
+                <p style={{ lineHeight: "20px", fontSize: "15px" }}>
+                  Phone Number
+                </p>
+              </small>
+              <p style={{ fontSize: "18px" }}>{userdata.phone}</p>
+            </div>
+          </div>
+          <div
+            className=" flex m-1"
+            style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
+          >
+            <div className=" w-20 flex justify-center align-items-center">
+              <CorporateFareIcon style={{ fontSize: 22 }} />
+            </div>
+            <div className=" w-80 ">
+              <small>
+                <p style={{ lineHeight: "20px", fontSize: "15px" }}>
+                  Institute/Organization
+                </p>
+              </small>
+              <p style={{ fontSize: "18px" }}>
+                {userdata.institution_organization}
+              </p>
+            </div>
+          </div>
+          <div
+            className=" flex m-1"
+            style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
+          >
+            <div className=" w-20 flex justify-center align-items-center">
+              <ClassIcon style={{ fontSize: 22 }} />
+            </div>
+            <div className=" w-80 ">
+              <small>
+                <p style={{ lineHeight: "20px", fontSize: "15px" }}>
+                  Research Department
+                </p>
+              </small>
+              <p style={{ fontSize: "18px" }}>
+                {userdata.research_department}
+              </p>
+            </div>
+          </div>
+          <div
+            className=" flex m-1"
+            style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
+          >
+            <div className=" w-20 flex justify-center align-items-center">
+              <AccountTreeIcon style={{ fontSize: 22 }} />
+            </div>
+            <div className=" w-80 ">
+              <small>
+                <p style={{ lineHeight: "20px", fontSize: "15px" }}>
+                  Project Incharge
+                </p>
+              </small>
+              <p style={{ fontSize: "18px" }}>
+                {userdata.project_incharge_name}
+              </p>
+            </div>
+          </div>
+          <div
+            className=" flex m-1"
+            style={{ width: "90%", borderBottom: "0.5px solid #8057D7" }}
+          >
+            <div className=" w-20 flex justify-center align-items-center">
+              <LocationOnIcon style={{ fontSize: 22 }} />
+            </div>
+            <div className=" w-80 ">
+              <small>
+                <p style={{ lineHeight: "20px", fontSize: "15px" }}>
+                  Address
+                </p>
+              </small>
+              <p style={{ fontSize: "18px" }}>
+                {userdata.address}, {userdata.country}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div
+          className=" mt-3 flex justify-evenly p-2"
+          style={{ width: "100%", height: "10%" }}
+        >
+          <Button
+            style={{
+              width: "45%",
+              backgroundColor: colors.blueAccent[700],
+              color: colors.grey[100],
+              fontSize: "10px",
+              fontWeight: "bold",
+              padding: "3px 3px",
+            }}
+          >
+            Export Projects
+          </Button>
+          <Button
+            style={{
+              width: "45%",
+              backgroundColor: colors.blueAccent[700],
+              color: colors.grey[100],
+              fontSize: "10px",
+              fontWeight: "bold",
+              padding: "3px 3px",
+            }}
+          >
+            Export Samples
+          </Button>
+        </div>
+      </div>
+        :
+        <div style={{ height: "90%" }}>
+          <div
+            className="flex flex-col align-items-stretch p-3"
+            style={{ height: "90%" }}
+          >
+            
+            <TextField
+              label="Name" 
+              variant="outlined"
+              className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline mx-auto"
+              id="username"
+              type="text"
+              value={fullName}
+            />
+            <TextField
+                label="Email"
+                autoComplete="off"
+                variant="outlined"
+                className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="email"
+                type="text"
+                value={email}
+              />
+              <TextField
+                label="Phone Number"
+                autoComplete="off"
+                variant="outlined"
+                className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="phonenumber"
+                type="text"
+                value={phonenumber}
+              />
+              <TextField
+                label="Institute/Organization"
+                variant="outlined"
+                className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                type="text"
+                value={institute_organization}
+              />
+              <TextField
+                label="Research Department"
+                variant="outlined"
+                className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                type="text"
+                value={department}
+              />
+              <TextField
+                label="Project Incharge"
+                variant="outlined"
+                className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                type="text"
+                value={piName}
+              />
+              <TextField
+                label="Address"
+                variant="outlined"
+                className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                type="text"
+                value={address}
+              />
+              <TextField
+                label="Country"
+                variant="outlined"
+                className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                type="text"
+                value={country}
+              />
+            
+
+          
+          </div>
+          <div
+            className=" mt-3 flex p-2 justify-center"
             style={{ width: "100%", height: "10%" }}
           >
             <Button
+              onClick={updateprofile}
               style={{
                 width: "45%",
                 backgroundColor: colors.blueAccent[700],
                 color: colors.grey[100],
-                fontSize: "10px",
+                fontSize: "15px",
                 fontWeight: "bold",
                 padding: "3px 3px",
               }}
             >
-              Export Projects
-            </Button>
-            <Button
-              style={{
-                width: "45%",
-                backgroundColor: colors.blueAccent[700],
-                color: colors.grey[100],
-                fontSize: "10px",
-                fontWeight: "bold",
-                padding: "3px 3px",
-              }}
-            >
-              Export Samples
+              Approve
             </Button>
           </div>
+        </div>
+        }
+        
+
+
       </div>
-      <div className="m-auto flex flex-column justify-between" style={{ width: "70%", height: "95%" }}>
-        <div className=" flex align-items-center" style={{ height: "25%", backgroundColor: colors.primary[400] }}>
+      <div
+        className="m-auto flex flex-column justify-between"
+        style={{ width: "70%", height: "95%" }}
+      >
+        <div
+          className=" flex align-items-center"
+          style={{ height: "25%", backgroundColor: colors.primary[400] }}
+        >
           <Box className=" flex flex-wrap " style={{ width: "100%" }}>
             <Box
               style={{ width: "25%" }}
@@ -1164,9 +877,8 @@ const Userprofile = () => {
           </Box>
         </div>
         <div className="p-2" style={{ height: "72.5%" }}>
-        {!projectSelected ? (
+          {!projectSelected ? (
             <DataGrid
-          
               rows={projectdata}
               columns={columns}
               slots={{
@@ -1192,7 +904,7 @@ const Userprofile = () => {
                   <h1 style={{ fontSize: 25 }}>{projectName}</h1>
                 </div>
                 <Button
-                  onClick = {handlesampleDownload}
+                  onClick={handlesampleDownload}
                   style={{
                     width: "15%",
                     backgroundColor: colors.primary[400],
@@ -1208,7 +920,6 @@ const Userprofile = () => {
               <div className="flex" style={{ height: "90%", width: "100%" }}>
                 <DataGrid
                   style={{ width: "60%" }}
-                
                   rows={sampledata}
                   columns={columns2}
                   slots={{
@@ -1222,7 +933,11 @@ const Userprofile = () => {
                 >
                   <div
                     className=" mx-auto"
-                    style={{ height: "47.5%", width: "95%", border : "0.5px solid #cccc" }}
+                    style={{
+                      height: "47.5%",
+                      width: "95%",
+                      border: "0.5px solid #cccc",
+                    }}
                   >
                     <h1
                       style={{ height: "20%" }}
@@ -1231,7 +946,7 @@ const Userprofile = () => {
                       Logs
                     </h1>
                     <Stack
-                     className="px-2"
+                      className="px-2"
                       sx={{
                         height: "80%",
                         width: "100%",
@@ -1264,27 +979,32 @@ const Userprofile = () => {
                     >
                       Reports
                     </h1>
-                    <Grid item xs={12} md={6}  sx={{
+                    <Grid
+                      item
+                      xs={12}
+                      md={6}
+                      sx={{
                         height: "80%",
                         width: "100%",
                         overflow: "hidden",
                         overflowY: "scroll",
-                      }}>
-                        <List dense={false}>
-                          {generate(
-                            <ListItem>
-                              <ListItemAvatar>
-                                <Avatar>
-                                  <FolderIcon />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary="Single-line item"
-                                secondary={"Secondary text"}
-                              />
-                            </ListItem>
-                          )}
-                        </List>
+                      }}
+                    >
+                      <List dense={false}>
+                        {generate(
+                          <ListItem>
+                            <ListItemAvatar>
+                              <Avatar>
+                                <FolderIcon />
+                              </Avatar>
+                            </ListItemAvatar>
+                            <ListItemText
+                              primary="Single-line item"
+                              secondary={"Secondary text"}
+                            />
+                          </ListItem>
+                        )}
+                      </List>
                     </Grid>
                   </div>
                 </div>

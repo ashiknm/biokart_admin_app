@@ -76,7 +76,7 @@ const Users = () => {
 
         // console.log("user clicked",params.row.user_id);
         
-        <div style={{"cursor" : "pointer"}} className="id-column--cell" onClick={()=>navigate(`/userprofile/${params.row.user_id}`)}>
+        <div style={{"cursor" : "pointer"}} className="id-column--cell" onClick={()=>navigate(`/userprofile/${params.row.user_id}`, {state:{updates: false}})}>
           {/* Custom cell content goes here */}
           {params.row.full_name}
         </div>
