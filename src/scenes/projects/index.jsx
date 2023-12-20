@@ -227,9 +227,9 @@ const Projects = () => {
               
               <div>
                 <GridToolbar />
-                <Button style= {{backgroundColor: "white"}} variant="outlined" onClick={handleExportClick}>
+                {/* <Button style= {{backgroundColor: "white"}} variant="outlined" onClick={handleExportClick}>
                   Export
-                </Button>
+                </Button> */}
               </div>
             ),
           }}

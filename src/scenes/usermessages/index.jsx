@@ -6,6 +6,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ImageIcon from '@mui/icons-material/Image';
 
+import useAuth from "../../hooks/useAuth";
+
 import Modal from "@mui/material/Modal";
 
 import useAxiosPrivate from "../../hooks/useAxiosPrivate";
@@ -21,6 +23,8 @@ const Usermessages = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const {auth} = useAuth();
+
   const [messages, setMessages] = useState([]);
 
   const [selectedImage, setSelectedImage] = useState(null);
@@ -29,8 +33,6 @@ const Usermessages = () => {
 
   const [open, setOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-
- 
 
   const closeModal = () => {
     setSelectedImage(null);
@@ -136,7 +138,8 @@ const Usermessages = () => {
                         {item.status === "uploaded"?
                             <CheckCircleOutlineIcon onClick = {()=>handlecheckBoxclick(item.contact_id)} style={{fontSize : "28px", cursor : "pointer", color : colors.greenAccent[700]}} />
                         :  <CheckCircleIcon  style={{fontSize : "28px", cursor : "pointer", color : colors.greenAccent[700]}} /> }
-                        <DeleteIcon onClick={()=>handledeleteBoxclick(item.contact_id)} style={{fontSize : "28px", cursor : "pointer", color : colors.redAccent[700]}} />
+                        {auth.role==='["superadmin"]' &&
+                        <DeleteIcon onClick={()=>handledeleteBoxclick(item.contact_id)} style={{fontSize : "28px", cursor : "pointer", color : colors.redAccent[700]}} />}
                     </div>
                 </div>
                 <h1 style={{fontSize : "15px", position : "absolute", top: 15, right: 15}}>UID : {item.user_id}</h1>

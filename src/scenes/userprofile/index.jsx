@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography,  MenuItem } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import ToggleSwitch from "../../components/ToggleSwitch";
@@ -7,7 +7,13 @@ import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
 import useAuth from "../../hooks/useAuth";
+import Modal from "@mui/material/Modal";
 
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { isPossiblePhoneNumber } from "react-phone-number-input";
+
+import { countries } from "../../data/mockData";
 import Header from "../../components/Header";
 import { useTheme } from "@mui/material";
 
@@ -15,7 +21,7 @@ import Statbox2 from "../../components/StatBox2";
 
 import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { useLocation, useNavigate, Link } from "react-router-dom";
 
@@ -89,9 +95,14 @@ const Userprofile = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const errorRef = useRef();
+  const [errorMsg, setErrorMsg] = useState("");
   const [userdata, setUserdata] = useState({});
+  const [userupdatesdata, setUserupdatesdata] = useState({});
   const [projectdata, setProjectdata] = useState([]);
   const [sampledata, setSampledata] = useState([]);
+
+  const [open, setOpen] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [validName, setValidName] = useState(false);
@@ -121,7 +132,8 @@ const Userprofile = () => {
   const [passwordSet, setPasswordSet] = useState(false);
   const [checked, setChecked] = useState(false);
 
-  const showupdates = location.state.updates;
+  const [showupdates, setShowupdates] = useState(location.state.updates);
+
 
   const [projectSelected, setProjectSelected] = useState(false);
   const [projectId, setProjectId] = useState();
@@ -136,6 +148,21 @@ const Userprofile = () => {
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleClickShowPassword2 = () => setShowPassword2((show) => !show);
 
+
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 600,
+    bgcolor: colors.primary[400],
+    // border: "2px solid #000",
+    boxShadow: 24,
+    p: 4,
+    maxHeight: '100vh', // Set maximum height
+    overflowY: 'auto', // Enable vertical scroll if content overflows
+    position : 'relative'
+  };
 
 
   useEffect(() => {
@@ -170,21 +197,16 @@ const Userprofile = () => {
     event.preventDefault();
   };
 
+  const handleClose = () =>{
+    setOpen(false);
+  }
+
   const getUserUpdatesdata = async () =>{
     try {
       const response = await axiosPrivate.get(`/showupdaterequestedusersbyid/${userId}`, {
         // signal: controller.signal
       });
-      const user = response.data;
-      setFullName(user.full_name);
-      setEmail(user.email);
-      setPiName(user.project_incharge_name);
-      setDepartment(user.research_department);
-      setPhonenumber(user.phone);
-      setInstitute_organization(user.institution_organization);
-      setAddress(user.address);
-      setCountry(user.country);
-      setPassword(user.password);
+      setUserupdatesdata(response.data);
 
 
     } catch (err) {
@@ -200,6 +222,16 @@ const Userprofile = () => {
         // signal: controller.signal
       });
       setUserdata(response.data);
+      const user = response.data;
+      setFullName(user.full_name);
+      setEmail(user.email);
+      setPiName(user.project_incharge_name);
+      setDepartment(user.research_department);
+      setPhonenumber(user.phone);
+      setInstitute_organization(user.institution_organization);
+      setAddress(user.address);
+      setCountry(user.country);
+      // setPassword(user.password);
       if ( showupdates && response.data.update_status === "pending") {
         setChecked(true);
         getUserUpdatesdata();
@@ -212,8 +244,6 @@ const Userprofile = () => {
 
   useEffect(() => {
     let isMounted = true;
-
-    
 
     const getProjectData = async () => {
       try {
@@ -234,7 +264,7 @@ const Userprofile = () => {
       isMounted = false;
       // controller.abort();
     };
-  }, [userId]);
+  }, [userId, location]);
 
   useEffect(() => {
     let isMounted = true;
@@ -287,28 +317,68 @@ const Userprofile = () => {
     )
     .then(() => {
       toast.success("Details Approved Successfully ");
+      setShowupdates(false);
+      setChecked(false)
       getUserData();
     });
   }
 
-  const handlePasswordchange = async () => {
-    const response = await axiosPrivate
-      .put(
-        `/updateuserpassword/${userId}`,
-        JSON.stringify({
-          password: password,
-        }),
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
-        }
-      )
-      .then(() => {
-        setPassword("");
-        setConfirmPassword("");
-        toast.success("Password Updated Successfully ");
-      });
-  };
+  
+
+  const handleUserUpdate = async () =>{
+        try {
+          const response = await axiosPrivate.put(
+            `/updateuser/${userId}`,
+            JSON.stringify({
+              "full_name": fullName,
+              "project_incharge_name": piName,
+              "email": email,
+              "research_department": department,
+              "phone": phonenumber,
+              "institution_organization": institute_organization,
+              "address": address,
+              "country": country,
+              "password": password
+            }),
+            {
+              headers: { "Content-Type": "application/json" },
+              withCredentials: true,
+              
+            }
+          ).then(()=>{
+            setOpen(false);
+            getUserData();
+            toast.success("Details Updated Successfully ");
+          })
+          
+        } catch (err) {
+          if(!err?.response){
+            setErrorMsg("No Seerver Rewsponse");
+          }else {
+            setErrorMsg("some error");
+          }
+          errorRef.current.focus();
+      }
+  }
+
+  // const handlePasswordchange = async () => {
+  //   const response = await axiosPrivate
+  //     .put(
+  //       `/updateuserpassword/${userId}`,
+  //       JSON.stringify({
+  //         password: password,
+  //       }),
+  //       {
+  //         headers: { "Content-Type": "application/json" },
+  //         withCredentials: true,
+  //       }
+  //     )
+  //     .then(() => {
+  //       setPassword("");
+  //       setConfirmPassword("");
+  //       toast.success("Password Updated Successfully ");
+  //     });
+  // };
 
   const handleprojectDownload = (project_id) => {
     toast.success("Project Downloaded Successfully " + project_id);
@@ -511,6 +581,282 @@ const Userprofile = () => {
       className="flex justify-around px-2"
       style={{ height: "90vh", overflowY: "scroll" }}
     >
+       {open && (
+        <Modal
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+          
+        >
+          <Box sx={style}>
+            <Typography id="modal-modal-title" variant="h4" component="h2">
+              Update User details
+            </Typography>
+            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+            <p ref = {errorRef} aria-live="assertive" className={errorMsg ? "p-2 text-sm text-danger": "hidden"}>{errorMsg}</p>
+            <div className="flex flex-wrap -mx-2">
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                autoComplete="off"
+                label="Full Name"
+                variant="outlined"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="fullname"
+                type="text"
+                placeholder="Enter your Full Name *"
+                required
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
+                aria-invalid={validName ? "false" : "true"}
+                aria-describedby="uidnote"
+              />
+              <p
+                id="uidnote"
+                className={
+                  fullName && !validName
+                    ? "bg-dark text-light rounded text-sm p-2 mt-1"
+                    : "hidden"
+                }
+              >
+                <InfoIcon fontSize="25" className="me-2" />
+                4 to 24 characters. <br />
+                Must begin with a letter <br />
+                Letters, numbers, underscores, hyphens allowed <br />
+              </p>
+            </div>
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                // ref = {piNameRef}
+                label="P.I Name"
+                autoComplete="off"
+                variant="outlined"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="piname"
+                type="text"
+                placeholder="P.I Name"
+                value={piName}
+                onChange={(event) => setPiName(event.target.value)}
+                aria-invalid={validPiName ? "false" : "true"}
+                aria-describedby="uidnote2"
+              />
+              <p
+                id="uidnote2"
+                className={
+                  piName && !validPiName
+                    ? "bg-dark text-light rounded text-sm p-2 mt-1"
+                    : "hidden"
+                }
+              >
+                <InfoIcon fontSize="25" className="me-2" />
+                4 to 24 characters. <br />
+                Must begin with a letter <br />
+                Letters, numbers, underscores, hyphens allowed <br />
+              </p>
+            </div>
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                label="Email"
+                autoComplete="off"
+                variant="outlined"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="email"
+                type="text"
+                placeholder="Email Address *"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                aria-invalid={validEmail ? "false" : "true"}
+                aria-describedby="uidnote3"
+              />
+              <p
+                id="uidnote3"
+                className={
+                  email && !validEmail
+                    ? "bg-dark text-light rounded text-sm p-2 mt-1"
+                    : "hidden"
+                }
+              >
+                <InfoIcon fontSize="25" className="me-2" />
+                Email Address is not valid
+              </p>
+            </div>
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                label="Department"
+                autoComplete="off"
+                variant="outlined"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="department"
+                type="text"
+                placeholder="Department of Research"
+                value={department}
+                onChange={(event) => setDepartment(event.target.value)}
+                aria-invalid={validDepartment ? "false" : "true"}
+                aria-describedby="uidnote4"
+              />
+              <p
+                id="uidnote4"
+                className={
+                  department && !validDepartment
+                    ? "bg-dark text-light rounded text-sm p-2 mt-1"
+                    : "hidden"
+                }
+              >
+                <InfoIcon fontSize="25" className="me-2" />
+                Department is not valid
+              </p>
+            </div>
+            <div className="w-full flex md:w-1/2 px-2 mb-4">
+              <div
+                className="border flex align-items-center p-2 rounded w-full"
+                style={{ borderColor: "black", backgroundColor: colors.primary[400] }}
+              >
+                <PhoneInput
+                  defaultCountry="IN"
+                  className="text-dark"
+                  placeholder="Enter phone number"
+                  style={{ border: "none", backgroundColor: colors.primary[400] }}
+                  value={phonenumber}
+                  onChange={setPhonenumber}
+                  error={
+                    phonenumber && isPossiblePhoneNumber(phonenumber)
+                      ? "true"
+                      : "false"
+                  }
+                />
+              </div>
+
+            </div>
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                label="Institue / Organization"
+                autoComplete="off"
+                variant="outlined"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="institute"
+                type="text"
+                placeholder="Institue / Organization *"
+                required
+                value={institute_organization}
+                onChange={(event) =>
+                  setInstitute_organization(event.target.value)
+                }
+              />
+            </div>
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                label="Address"
+                autoComplete="off"
+                variant="outlined"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="address"
+                type="text"
+                placeholder="Address"
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
+              />
+            </div>
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                select
+                label="Country"
+                variant="outlined"
+                // value={databasename}
+                // onChange={(event)=>setDatabasename(event.target.value)}
+                laceholder="Country"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="country"
+                value={country}
+                onChange={(event) => {
+                  setCountry(event.target.value);
+                }}
+                type="text"
+              >
+                {countries.map((item, index) => (
+                  <MenuItem key={index} value={item.name}>
+                    {item.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </div>
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                label="New Password"
+                autoComplete="off"
+                variant="outlined"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="password"
+                type="password"
+                placeholder="New Password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                aria-invalid={validPassword ? "false" : "true"}
+                aria-describedby="uidnote5"
+              />
+              <p
+                id="uidnote5"
+                className={
+                  password && !validPassword
+                    ? "bg-dark text-light rounded text-sm p-2 mt-1"
+                    : "hidden"
+                }
+              >
+                <InfoIcon fontSize="25" className="me-2" />
+                8 to 24 characters. <br />
+                Must include uppercase and lowercase letters, a number and a
+                special character. <br />
+                Allowed Special characters:{" "}
+                <span aria-label="explanation mark">!</span>
+                <span aria-label="at symbol">@</span>
+                <span aria-label="hashtag">#</span>
+                <span aria-label="dollar sign">$</span>
+                <span aria-label="percent">%</span>
+                <br />
+              </p>
+            </div>
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                label="Confirm Password"
+                variant="outlined"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="confirmpassword"
+                type="password"
+                placeholder="Confirm Password"
+                required
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                aria-invalid={validConfirmpassword ? "false" : "true"}
+                aria-describedby="uidnote6"
+              />
+              <p
+                id="uidnote6"
+                className={
+                  confirmPassword && !validConfirmpassword
+                    ? "bg-dark text-light rounded text-sm p-2 mt-1"
+                    : "hidden"
+                }
+              >
+                <InfoIcon fontSize="25" className="me-2" />
+                Password does not match
+              </p>
+            </div>
+          </div>
+
+              <div className="flex justify-center  align-items-center mt-4 w-100"> 
+              <button
+                  className="btn text-light"
+                  style={{ backgroundColor: colors.greenAccent[700] }}
+                  onClick={handleUserUpdate}
+                >
+                  Update
+                </button>
+              </div>
+            </Typography>
+          </Box>
+        </Modal>
+      )}
       <div
         className="m-auto p-2"
         style={{
@@ -522,7 +868,7 @@ const Userprofile = () => {
         <div className="flex justify-between" style={{ height: "5%" }}>
           <h2 className="m-2" style={{ fontSize: "18px" }}>
             Profile <ChevronRightIcon className="ms-1" />
-            <EditIcon className="cursor-pointer" />
+            <EditIcon className="cursor-pointer" onClick = {()=>setOpen(true)} />
           </h2>
           {showupdates &&
             (auth.role === '["admin"]' || auth.role === '["superadmin"]') && (
@@ -717,7 +1063,7 @@ const Userprofile = () => {
         <div style={{ height: "90%" }}>
           <div
             className="flex flex-col align-items-stretch p-3"
-            style={{ height: "90%" }}
+            style={{ height: "90%", overflowY: "auto" }}
           >
             
             <TextField
@@ -726,7 +1072,7 @@ const Userprofile = () => {
               className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline mx-auto"
               id="username"
               type="text"
-              value={fullName}
+              value={userupdatesdata.full_name}
             />
             <TextField
                 label="Email"
@@ -735,7 +1081,7 @@ const Userprofile = () => {
                 className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 id="email"
                 type="text"
-                value={email}
+                value={userupdatesdata.email}
               />
               <TextField
                 label="Phone Number"
@@ -744,42 +1090,42 @@ const Userprofile = () => {
                 className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 id="phonenumber"
                 type="text"
-                value={phonenumber}
+                value={userupdatesdata.phone}
               />
               <TextField
                 label="Institute/Organization"
                 variant="outlined"
                 className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 type="text"
-                value={institute_organization}
+                value={userupdatesdata.institution_organization}
               />
               <TextField
                 label="Research Department"
                 variant="outlined"
                 className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 type="text"
-                value={department}
+                value={userupdatesdata.research_department}
               />
               <TextField
                 label="Project Incharge"
                 variant="outlined"
                 className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 type="text"
-                value={piName}
+                value={userupdatesdata.project_incharge_name}
               />
               <TextField
                 label="Address"
                 variant="outlined"
                 className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 type="text"
-                value={address}
+                value={userupdatesdata.address}
               />
               <TextField
                 label="Country"
                 variant="outlined"
                 className="appearance-none  rounded w-full mt-4  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 type="text"
-                value={country}
+                value={userupdatesdata.country}
               />
             
 
@@ -876,7 +1222,39 @@ const Userprofile = () => {
             </Box>
           </Box>
         </div>
-        <div className="p-2" style={{ height: "72.5%" }}>
+        <Box className="p-2" style={{ height: "72.5%" }}
+        sx={{
+          "& .MuiDataGrid-root": {
+            border: "none",
+          },
+          "& .MuiDataGrid-cell": {
+            borderBottom: "none",
+          },
+          "& .name-column--cell": {
+            color: colors.greenAccent[300],
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: colors.blueAccent[700],
+            borderBottom: "none",
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            backgroundColor: colors.primary[400],
+          },
+          "& .MuiDataGrid-footerContainer": {
+            borderTop: "none",
+            backgroundColor: colors.blueAccent[700],
+          },
+          "& .MuiCheckbox-root": {
+            color: `${colors.greenAccent[200]} !important`,
+          },
+          "& .MuiDataGrid-toolbarContainer .MuiButton-text": {
+            color: `${colors.grey[100]} !important`,
+          },
+          "& .MuiDataGrid-toolbarContainer .MuiDataGrid-toolbarExport": {
+             display: "none"
+          }
+        }}
+        >
           {!projectSelected ? (
             <DataGrid
               rows={projectdata}
@@ -1011,7 +1389,7 @@ const Userprofile = () => {
               </div>
             </div>
           )}
-        </div>
+        </Box>
       </div>
       <ToastContainer />
     </Box>
