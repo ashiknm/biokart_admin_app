@@ -6,6 +6,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ImageIcon from '@mui/icons-material/Image';
 
+import moment from 'moment';
+
+
 import useAuth from "../../hooks/useAuth";
 
 import Modal from "@mui/material/Modal";
@@ -34,10 +37,33 @@ const Usermessages = () => {
   const [open, setOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
+  const [userTimezone, setUserTimezone] = useState(null);
+  const [localTime, setLocalTime] = useState(null);
+
+  useEffect(() => {
+    // Get user's timezone
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setUserTimezone(userTimezone);
+
+    // Convert UTC time to local time
+    
+  }, []);
+
   const closeModal = () => {
     setSelectedImage(null);
     setOpen(false);
   };
+
+  function convertUtcToLocal(utcString) {
+    // Parse the UTC time using moment.utc
+    const utcMoment = moment.utc(utcString, "YYYY-MM-DD HH:mm:ss");
+  
+    // Convert to local time zone
+    const localMoment = utcMoment.local();
+  
+    // Return the formatted local time
+    return localMoment.format("DD/MM/YYYY h:mm a");
+  }
 
   const style = {
     position: "absolute",
@@ -45,13 +71,11 @@ const Usermessages = () => {
     left: "50%",
     transform: "translate(-50%, -50%)",
     width: 600,
-    bgcolor: "background.paper",
-    // border: "2px solid #000",
+    bgcolor: colors.primary[400],
     boxShadow: 24,
-    p: 4,
+    p: 1,
     maxHeight: '100vh', // Set maximum height
     overflowY: 'auto', // Enable vertical scroll if content overflows
-    position : 'relative'
   };
 
   const getMessages = async () => {
@@ -124,14 +148,14 @@ const Usermessages = () => {
       <Header title="Messages" />
 
       {messages.map((item, index)=>(
-            <div key = {index} className="border rounded m-auto p-3 mt-3" style = {{height : "auto", width : "95%", position : "relative"}}>
+            <div key = {index} className=" rounded m-auto p-3 mt-3" style = {{height : "auto", width : "95%", position : "relative", backgroundColor: colors.primary[400]}}>
                 <h1 style={{fontSize : "20px", color:colors.greenAccent[400]}}>@{item.user_name}</h1>
                 <h1 className="p-3" style={{fontSize : "18px"}}>{item.subject}</h1>
                 <p className="p-3" style={{fontSize : "17px"}}>{item.message}</p>
                 <div className="flex justify-between mb-2" style = {{height : "40px", width: "100%"}}>
                     <div className="flex align-items-center ms-4" style = {{height : "100%", width: "150px"}}>
-                        {item.upload_screenshot &&
-                            <ImageIcon onClick={() => handleImageClick(item.upload_screenshot)} style={{fontSize : "28px", cursor : "pointer"}} />
+                        {item.image_url &&
+                            <ImageIcon onClick={() => handleImageClick(item.image_url)} style={{fontSize : "28px", cursor : "pointer"}} />
                         } 
                     </div>
                     <div className="flex justify-evenly align-items-center" style = {{height : "100%", width: "150px"}}>
@@ -143,7 +167,9 @@ const Usermessages = () => {
                     </div>
                 </div>
                 <h1 style={{fontSize : "15px", position : "absolute", top: 15, right: 15}}>UID : {item.user_id}</h1>
-                <h1 style={{fontSize : "15px"}}>{item.contact_date}</h1>
+                <h1 style={{ fontSize: "15px" }}>
+            {convertUtcToLocal(item.contact_date)}
+          </h1>
           </div>
           ))
       }
@@ -156,14 +182,14 @@ const Usermessages = () => {
           aria-describedby="modal-modal-description"
           
         >
-          <Box sx={style} className="border">
+          <Box sx={style} >
             <Typography id="modal-modal-title" variant="h4" component="h2">
               
             </Typography>
             <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                {selectedImage && <img style={{height: "100px"}} src={selectedImage} alt="Selected" />}
-              <div className="flex justify-center  align-items-center mt-4 w-100"> 
-              
+                
+              <div className="flex justify-center  align-items-center  w-100"> 
+              {selectedImage && <img style={{height: "500px", width: "100%"}} src={selectedImage} alt="Selected" />}
               </div>
             </Typography>
           </Box>
