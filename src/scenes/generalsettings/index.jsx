@@ -14,6 +14,9 @@ import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+
 const SETTINGS_URL = "/updateSiteSettings";
 
 const Generalsettings = () => {
@@ -23,6 +26,10 @@ const Generalsettings = () => {
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [showSetings, setShowSettings] = useState(true);
+
+  const [showPageSetings, setShowPageSettings] = useState(true);
 
   const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
@@ -150,16 +157,32 @@ const Generalsettings = () => {
         <Button onClick = {saveSettngs} style= {{backgroundColor: colors.greenAccent[400]}} variant="contained">Save Changes</Button>
       </div>
       </div>
-      
-     
       <div className="ps-10" style={{height: "75%", overflow : 'auto'}}>
       <div className="mb-10"  style={{width: "100%"}}>
       
-        <div className="ps-5 pt-5 pe-5 pb-30" style={{width: "700px", backgroundColor: colors.primary[400]}}>
-          <Typography className="mb-2" variant="h3">
-            Site Settings :
-          </Typography>
-          <div className=" flex" style = {{height : "60px"}}>
+        <div className="ps-5 pt-2  pe-5 pb-30" style={{width: "700px", position : 'relative', backgroundColor: colors.primary[400]}}>
+          {/* <div className="border flex align-items-center justify-evenly" style={{width: '200px', height: '40px', position: 'absolute', right: 0, top: 0}}>
+           
+           
+          </div> */}
+          <div className=" flex" style = {{height : '50px', width: '100%'}}>
+            <div className=" flex align-items-center" style={{width: '60%'}}>
+              <Typography className="mb-2" variant="h3">
+                Site Settings :
+              </Typography>
+            </div>
+            <div className=" flex align-items-center justify-evenly" style={{width: '40%'}}>
+              <KeyboardArrowDownIcon onClick= {()=>setShowSettings(true)} className="cursor-pointer" style={{fontSize: 35}} />
+              <KeyboardArrowUpIcon onClick= {()=>setShowSettings(false)} className="cursor-pointer" style={{fontSize: 35}} />
+            </div>
+           
+          </div>
+          <hr className="mb-3"></hr>
+
+          {showSetings &&
+
+            <div>
+ <div className=" flex" style = {{height : "60px"}}>
             <div className=" flex align-items-center p-2" style = {{width: '30%'}}>
               <Typography variant="h4">Company Name :</Typography>
             </div>
@@ -351,16 +374,34 @@ const Generalsettings = () => {
             />
             </div>
           </div>
+            </div>
+          
+          }
+         
+         
 
         </div>
       </div>
 
       <div className="mb-10"  style={{width: "100%"}}>
-      <div className="ps-5 pt-5 pe-5 pb-30" style={{width: "700px", backgroundColor: colors.primary[400]}}>
-      <Typography className="mb-2" variant="h3">
-            Page Settings :
-          </Typography>
-          <div className=" flex" style = {{height : "60px"}}>
+      <div className="ps-5 pt-3 pe-5 pb-30" style={{width: "700px", backgroundColor: colors.primary[400]}}>
+      <div className=" flex" style = {{height : '50px', width: '100%'}}>
+            <div className=" flex align-items-center" style={{width: '60%'}}>
+              <Typography className="mb-2" variant="h3">
+                Page Settings :
+              </Typography>
+            </div>
+            <div className=" flex align-items-center justify-evenly" style={{width: '40%'}}>
+              <KeyboardArrowDownIcon onClick= {()=>setShowPageSettings(true)} className="cursor-pointer" style={{fontSize: 35}} />
+              <KeyboardArrowUpIcon onClick= {()=>setShowPageSettings(false)} className="cursor-pointer" style={{fontSize: 35}} />
+            </div>
+           
+          </div>
+          <hr className="mb-3"></hr>
+
+          {showPageSetings &&
+              <div>
+<div className=" flex" style = {{height : "60px"}}>
             <div className=" flex align-items-center p-2" style = {{width: '30%'}}>
               <Typography variant="h4">Page Header1:</Typography>
             </div>
@@ -424,6 +465,10 @@ const Generalsettings = () => {
             />
             </div>
           </div>
+              </div>
+          }
+
+          
         </div>
 
         </div>

@@ -156,7 +156,6 @@ const Userprofile = () => {
     transform: "translate(-50%, -50%)",
     width: 600,
     bgcolor: colors.primary[400],
-    // border: "2px solid #000",
     boxShadow: 24,
     p: 4,
     maxHeight: '100vh', // Set maximum height
@@ -231,6 +230,8 @@ const Userprofile = () => {
       setInstitute_organization(user.institution_organization);
       setAddress(user.address);
       setCountry(user.country);
+      setConfidence(user.confidence);
+      setCore(user.no_of_cores);
       // setPassword(user.password);
       if ( showupdates && response.data.update_status === "pending") {
         setChecked(true);
@@ -338,7 +339,9 @@ const Userprofile = () => {
               "institution_organization": institute_organization,
               "address": address,
               "country": country,
-              "password": password
+              "password": password,
+              "no_of_cores": core,
+              "confidence": confidence
             }),
             {
               headers: { "Content-Type": "application/json" },
@@ -779,6 +782,32 @@ const Userprofile = () => {
                   </MenuItem>
                 ))}
               </TextField>
+            </div>
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                label="No of Cores"
+                autoComplete="off"
+                variant="outlined"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="noofcores"
+                type="text"
+                placeholder="noofcores"
+                value={core}
+                onChange={(event) => setCore(event.target.value)}
+              />
+            </div>
+            <div className="w-full md:w-1/2 px-2 mb-4">
+              <TextField
+                label="Confidence"
+                autoComplete="off"
+                variant="outlined"
+                className="appearance-none  rounded w-full  text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="confidence"
+                type="text"
+                placeholder="Confidence"
+                value={confidence}
+                onChange={(event) => setConfidence(event.target.value)}
+              />
             </div>
             <div className="w-full md:w-1/2 px-2 mb-4">
               <TextField
